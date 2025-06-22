@@ -4,7 +4,7 @@ from typing import List, Optional, Union
 
 class Settings(BaseSettings):
     # Database
-    DATABASE_URL: str = "postgresql+asyncpg://user:password@localhost:5432/politishare"
+    DATABASE_URL: str = "sqlite+aiosqlite:///./politishare.db"
     SUPABASE_URL: Optional[str] = None
     SUPABASE_KEY: Optional[str] = None
     
@@ -17,11 +17,13 @@ class Settings(BaseSettings):
     API_V1_STR: str = "/api/v1"
     PROJECT_NAME: str = "PolitiShare"
     
-    # CORS
+    # CORS - include production domains
     BACKEND_CORS_ORIGINS: Union[str, List[str]] = [
         "http://localhost:3000",
         "http://localhost:5173", 
-        "http://localhost:8080"
+        "http://localhost:8080",
+        "https://politishare.vercel.app",  # Your Vercel domain
+        "https://*.vercel.app"  # All Vercel preview deployments
     ]
     
     # Environment

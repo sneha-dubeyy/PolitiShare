@@ -1,17 +1,20 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from app.core.config import settings
 from app.api import auth, users, surveys, predictions, social
 
+# Create FastAPI app with configuration
 app = FastAPI(
-    title="PolitiShare API",
+    title=settings.PROJECT_NAME,
     description="API for political party prediction and social features",
-    version="1.0.0"
+    version="1.0.0",
+    debug=settings.DEBUG
 )
 
-# Set up CORS
+# Set up CORS with configuration
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],  # Frontend URL
+    allow_origins=settings.BACKEND_CORS_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -26,20 +29,61 @@ app.include_router(social.router, prefix="/api/social", tags=["Social"])
 
 @app.get("/")
 async def root():
-    return {"message": "PolitiShare API is running"}
+    return {
+        "message": f"{settings.PROJECT_NAME} API is running",
+        "environment": settings.ENVIRONMENT,
+        "version": "1.0.0"
+    }
 
 @app.get("/health")
 async def health_check():
-    import sys
-    import pandas as pd
-    import sklearn
-    import numpy as np
-    
+    try:
+        import sys
+        
+        # Try to import packages safely
+        try:
+            import pandas as pd
+            pandas_version = pd.__version__
+        except ImportError:
+            pandas_version = "Not installed"
+        
+        try:
+            import sklearn
+            sklearn_version = sklearn.__version__
+        except ImportError:
+            sklearn_version = "Not installed"
+        
+        try:
+            import numpy as np
+            numpy_version = np.__version__
+        except ImportError:
+            numpy_version = "Not installed"
+        
+        return {
+            "status": "healthy",
+            "project": settings.PROJECT_NAME,
+            "environment": settings.ENVIRONMENT,
+            "python_version": f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}",
+            "pandas_version": pandas_version,
+            "sklearn_version": sklearn_version,
+            "numpy_version": numpy_version,
+            "debug_mode": settings.DEBUG
+        }
+    except Exception as e:
+        return {
+            "status": "error",
+            "project": settings.PROJECT_NAME,
+            "environment": settings.ENVIRONMENT,
+            "error": str(e)
+        }
+
+@app.get("/config")
+async def get_config_info():
+    """Get non-sensitive configuration information"""
     return {
-        "status": "healthy",
-        "python_version": sys.version,
-        "pandas_version": pd.__version__,
-        "sklearn_version": sklearn.__version__,
-        "numpy_version": np.__version__,
-        "environment": "ready"
+        "project_name": settings.PROJECT_NAME,
+        "environment": settings.ENVIRONMENT,
+        "api_prefix": settings.API_V1_STR,
+        "cors_origins": settings.BACKEND_CORS_ORIGINS,
+        "model_version": settings.MODEL_VERSION
     }

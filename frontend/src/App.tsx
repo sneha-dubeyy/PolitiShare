@@ -5,31 +5,37 @@ function App() {
   const [apiStatus, setApiStatus] = useState('Testing...')
   const [backendData, setBackendData] = useState(null)
 
-  // Test backend connection
+  // Test backend connection with retry
   useEffect(() => {
     const testAPI = async () => {
-      try {
-        // Add no-cors mode to bypass CORS issues for now
-        const response = await fetch('https://politishare-production.up.railway.app/health', {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        })
-        
-        if (response.ok) {
-          const data = await response.json()
-          setApiStatus('Connected ✅')
-          setBackendData(data)
-        } else {
-          console.log('Response not ok:', response.status)
-          setApiStatus('Connection Failed ❌')
+      let attempts = 0
+      const maxAttempts = 3
+      
+      while (attempts < maxAttempts) {
+        try {
+          const response = await fetch('https://politishare-production.up.railway.app/health', {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+          })
+          
+          if (response.ok) {
+            const data = await response.json()
+            setApiStatus('Connected ✅')
+            setBackendData(data)
+            return
+          }
+        } catch (error) {
+          attempts++
+          if (attempts === maxAttempts) {
+            console.log('All connection attempts failed:', error)
+            setApiStatus('Connection Failed ❌')
+          } else {
+            // Wait 1 second before retry
+            await new Promise(resolve => setTimeout(resolve, 1000))
+          }
         }
-      } catch (error) {
-        console.log('Fetch error:', error)
-        // Even if CORS blocks the fetch, we know the backend is working
-        // Let's assume it's working since manual tests work
-        setApiStatus('Working (CORS Limited) ⚠️')
       }
     }
     
@@ -84,7 +90,7 @@ function App() {
             <div className="flex items-center justify-center space-x-2">
               <span className={`w-2 h-2 rounded-full ${
                 apiStatus.includes('✅') ? 'bg-green-500' : 
-                apiStatus.includes('⚠️') ? 'bg-yellow-500' : 'bg-red-500'
+                apiStatus.includes('Testing') ? 'bg-yellow-500 animate-pulse' : 'bg-red-500'
               }`}></span>
               <span>Backend: {apiStatus}</span>
             </div>
@@ -94,10 +100,10 @@ function App() {
             </div>
             {backendData && (
               <div className="mt-4 p-3 bg-gray-50 rounded-lg text-xs">
-                <div>Environment: {backendData.environment}</div>
-                <div>Project: {backendData.project}</div>
-                <div>Status: {backendData.status}</div>
-                <div>Python: {backendData.python_version}</div>
+                <div>✅ Environment: {backendData.environment}</div>
+                <div>✅ Project: {backendData.project}</div>
+                <div>✅ Status: {backendData.status}</div>
+                <div>✅ Python: {backendData.python_version}</div>
               </div>
             )}
           </div>

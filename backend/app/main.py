@@ -11,10 +11,16 @@ app = FastAPI(
     debug=settings.DEBUG
 )
 
-# Set up CORS with configuration
+# Set up CORS with more permissive settings
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.BACKEND_CORS_ORIGINS,
+    allow_origins=[
+        "http://localhost:3000",
+        "http://localhost:5173",
+        "https://politishare-nc42r91ev-sneha-dubeys-projects.vercel.app",
+        "https://*.vercel.app",
+        "*"  # Allow all origins for now
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -84,6 +90,5 @@ async def get_config_info():
         "project_name": settings.PROJECT_NAME,
         "environment": settings.ENVIRONMENT,
         "api_prefix": settings.API_V1_STR,
-        "cors_origins": settings.BACKEND_CORS_ORIGINS,
         "model_version": settings.MODEL_VERSION
     }
